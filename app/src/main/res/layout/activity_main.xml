@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 환자 이름, 생년월일, MAC 입력 필드 -->
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="환자 이름" />
+
+    <EditText
+        android:id="@+id/etBirth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="생년월일" />
+
+    <EditText
+        android:id="@+id/etMac"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="신규 등록 SSID 입력" />
+
+    <!-- SSID 입력 필드 -->
+    <EditText
+        android:id="@+id/etSsid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="SSID교체 " />
+
+    <!-- 버튼들 -->
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="환자 등록" />
+
+    <Button
+        android:id="@+id/btnApplySsid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="SSID 교체" />
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="스캔 시작" />
+
+    <Button
+        android:id="@+id/btnStop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="스캔 종료" />
+
+    <!-- 상태 텍스트 -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="상태"
+        android:textSize="18sp" />
+</LinearLayout>
