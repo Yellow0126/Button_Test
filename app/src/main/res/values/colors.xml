@@ -7,4 +7,9 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="green">#4CAF50</color> <!-- 녹색 -->
+    <color name="blue">#2196F3</color> <!-- 파란색 -->
+    <color name="pink">#ed4cc8</color> <!-- 주황색 -->
+    <color name="red">#fc2121</color> <!-- 빨간색 -->
+
 </resources>
