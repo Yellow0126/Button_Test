@@ -183,6 +183,110 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var lastRssiMap: Map<String, Int> = emptyMap()  // 이전 스캔 결과 저장
+    private var lastScanTime: Long = 0L  // 마지막 스캔 시간
+
+    private val wifiScanReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == WifiManager.SCAN_RESULTS_AVAILABLE_ACTION) {
+                val results: List<ScanResult> = wifiManager.scanResults
+                if (results.isEmpty()) return
+
+                val currentTime = System.currentTimeMillis()
+                val timeDiff = if (lastScanTime == 0L) 0 else currentTime - lastScanTime
+
+                val rssiMap = mutableMapOf<String, Int>()
+                for (ap in results) {
+                    rssiMap[ap.BSSID] = ap.level
+                }
+
+                // 이전 결과와 비교하여 실제로 변경된 경우에만 처리
+                if (rssiMap != lastRssiMap) {
+                    lastRssiMap = rssiMap
+                    lastScanTime = currentTime
+
+                    // ===== 단일 location 전송 방식 시작 =====
+                    /*
+                    val singlePayload = SingleWifiPayload(
+                        locations = rssiMap
+                    )
+
+                    // 전송할 데이터 로그 출력 (단일 location)
+                    Log.d("WifiScan", "전송할 데이터:")
+                    Log.d("WifiScan", "locations: ${singlePayload.locations}")
+
+                    // Wi-Fi 로그 전송 (단일 location)
+                    wifiService.sendWifiLog(patientMac, singlePayload).enqueue(object : Callback<Void> {
+                        override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                            if (response.isSuccessful) {
+                                tvStatus.text = "RSSI 전송 성공 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                                tvServerStatus.text = "서버 상태: 전송 완료"
+                            } else {
+                                tvStatus.text = "RSSI 전송 실패 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                                tvServerStatus.text = "서버 오류: ${response.code()}"
+                            }
+                        }
+
+                        override fun onFailure(call: Call<Void>, t: Throwable) {
+                            tvStatus.text = "RSSI 전송 실패 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                            tvServerStatus.text = "서버 통신 실패: ${t.message}"
+                        }
+                    })
+                    */
+                    // ===== 단일 location 전송 방식 끝 =====
+
+                    // ===== 3개 location 전송 방식 시작 =====
+                    // 새로운 측정값을 큐에 추가
+                    rssiQueue.addFirst(rssiMap)
+                    // 큐 크기를 3으로 유지
+                    while (rssiQueue.size > 3) {
+                        rssiQueue.removeLast()
+                    }
+
+                    // 3개가 모두 채워졌을 때만 전송
+                    if (rssiQueue.size == 3) {
+                        val payload = WifiPayload(
+                            location1 = rssiQueue.elementAtOrNull(0) ?: emptyMap(),
+                            location2 = rssiQueue.elementAtOrNull(1) ?: emptyMap(),
+                            location3 = rssiQueue.elementAtOrNull(2) ?: emptyMap()
+                        )
+
+                        // 전송할 데이터 로그 출력 (3개 location)
+                        Log.d("WifiScan", "전송할 데이터:")
+                        Log.d("WifiScan", "스캔 간격: ${timeDiff}ms")
+                        Log.d("WifiScan", "location1 (현재): ${payload.location1}")
+                        Log.d("WifiScan", "location2 (이전): ${payload.location2}")
+                        Log.d("WifiScan", "location3 (이전이전): ${payload.location3}")
+
+                        // Wi-Fi 로그 전송
+                        wifiService.sendWifiLogMulti(patientMac, payload).enqueue(object : Callback<Void> {
+                            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                                if (response.isSuccessful) {
+                                    tvStatus.text = "RSSI 전송 성공 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                                    tvServerStatus.text = "서버 상태: 전송 완료"
+                                } else {
+                                    tvStatus.text = "RSSI 전송 실패 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                                    tvServerStatus.text = "서버 오류: ${response.code()}"
+                                }
+                            }
+
+                            override fun onFailure(call: Call<Void>, t: Throwable) {
+                                tvStatus.text = "RSSI 전송 실패 (${rssiMap.size}개, 스캔 간격: ${timeDiff}ms)"
+                                tvServerStatus.text = "서버 통신 실패: ${t.message}"
+                            }
+                        })
+                    }
+                    // ===== 3개 location 전송 방식 끝 =====
+                }
+
+                // 스캔이 완료되면 바로 다음 스캔 시작
+                if (scanning) {
+                    wifiManager.startScan()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -257,7 +361,8 @@ class MainActivity : AppCompatActivity() {
         btnStartScan.setOnClickListener {
             scanning = true
             tvStatus.text = "스캔 시작"
-            scanAndSend()
+            // scanAndSend() 대신 직접 스캔 시작
+            wifiManager.startScan()
         }
         btnStopScan.setOnClickListener {
             scanning = false
@@ -300,6 +405,8 @@ class MainActivity : AppCompatActivity() {
         registerReceiver(emergencyReceiver, IntentFilter(FallDetectionService.ACTION_EMERGENCY))
         // 간호사 호출 수신기 등록
         registerReceiver(nurseCallReceiver, IntentFilter(FallDetectionService.ACTION_NURSE_CALL))
+        // Wi-Fi 스캔 결과 수신기 등록
+        registerReceiver(wifiScanReceiver, IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
     }
 
     override fun onPause() {
@@ -307,106 +414,7 @@ class MainActivity : AppCompatActivity() {
         unregisterReceiver(statusReceiver)
         unregisterReceiver(emergencyReceiver)
         unregisterReceiver(nurseCallReceiver)
-    }
-
-    // Wi-Fi 스캔 + 서버 전송
-    private fun scanAndSend() {
-        if (!scanning) return
-
-        // 위치 권한 확인
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            Toast.makeText(this, "위치 권한이 필요합니다", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val success = wifiManager.startScan()
-        if (success) {
-            val results: List<ScanResult> = wifiManager.scanResults
-            val rssiMap = mutableMapOf<String, Int>()
-
-            for (ap in results) {
-                rssiMap[ap.BSSID] = ap.level
-            }
-
-            // ===== 단일 location 전송 방식 시작 =====
-            /*
-            val singlePayload = SingleWifiPayload(
-                locations = rssiMap
-            )
-
-            // 전송할 데이터 로그 출력 (단일 location)
-            Log.d("WifiScan", "전송할 데이터:")
-            Log.d("WifiScan", "locations: ${singlePayload.locations}")
-
-            // Wi-Fi 로그 전송 (단일 location)
-            wifiService.sendWifiLog(patientMac, singlePayload).enqueue(object : Callback<Void> {
-                override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                    if (response.isSuccessful) {
-                        tvStatus.text = "RSSI 전송 성공 (${rssiMap.size}개)"
-                        tvServerStatus.text = "서버 상태: 전송 완료"
-                    } else {
-                        tvStatus.text = "전송 실패 (서버 오류): ${response.code()}"
-                        tvServerStatus.text = "서버 오류: ${response.code()}"
-                    }
-                }
-
-                override fun onFailure(call: Call<Void>, t: Throwable) {
-                    tvStatus.text = "전송 실패: ${t.message}"
-                    tvServerStatus.text = "서버 통신 실패: ${t.message}"
-                }
-            })*/
-            // ===== 단일 location 전송 방식 끝 =====
-
-            // ===== 3개 location 전송 방식 시작 =====
-            // 새로운 측정값을 큐에 추가
-            rssiQueue.addFirst(rssiMap)
-            // 큐 크기를 3으로 유지
-            while (rssiQueue.size > 3) {
-                rssiQueue.removeLast()
-            }
-
-            // 3개가 모두 채워졌을 때만 전송
-            if (rssiQueue.size == 3) {
-                val payload = WifiPayload(
-                    location1 = rssiQueue.elementAtOrNull(0) ?: emptyMap(),
-                    location2 = rssiQueue.elementAtOrNull(1) ?: emptyMap(),
-                    location3 = rssiQueue.elementAtOrNull(2) ?: emptyMap()
-                )
-
-                // 전송할 데이터 로그 출력 (3개 location)
-                Log.d("WifiScan", "전송할 데이터:")
-                Log.d("WifiScan", "location1 (현재): ${payload.location1}")
-                Log.d("WifiScan", "location2 (이전): ${payload.location2}")
-                Log.d("WifiScan", "location3 (이전이전): ${payload.location3}")
-
-                // Wi-Fi 로그 전송
-                wifiService.sendWifiLogMulti(patientMac, payload).enqueue(object : Callback<Void> {
-                    override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                        if (response.isSuccessful) {
-                            tvStatus.text = "RSSI 전송 성공 (${rssiMap.size}개)"
-                            tvServerStatus.text = "서버 상태: 전송 완료"
-                        } else {
-                            tvStatus.text = "전송 실패 (서버 오류): ${response.code()}"
-                            tvServerStatus.text = "서버 오류: ${response.code()}"
-                        }
-                    }
-
-                    override fun onFailure(call: Call<Void>, t: Throwable) {
-                        tvStatus.text = "전송 실패: ${t.message}"
-                        tvServerStatus.text = "서버 통신 실패: ${t.message}"
-                    }
-                })
-            }
-
-        //===== 3개 location 전송 방식 끝 ===== */
-
-        } else {
-            tvStatus.text = "스캔 실패"
-        }
-
-        handler.postDelayed({ scanAndSend() }, 100)
+        unregisterReceiver(wifiScanReceiver)
     }
 
     // Retrofit SSL 우회 클라이언트 (테스트용)

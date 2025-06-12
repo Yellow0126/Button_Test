@@ -1,121 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- (기존) 환자 정보 입력 필드 -->
-    <EditText
-        android:id="@+id/etName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="환자 이름" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <EditText
-        android:id="@+id/etBirth"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="생년월일" />
+        <!-- (기존) 환자 정보 입력 필드 -->
+        <EditText
+            android:id="@+id/etName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="환자 이름" />
 
-    <EditText
-        android:id="@+id/etMac"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="신규 등록 SSID 입력" />
+        <EditText
+            android:id="@+id/etBirth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="생년월일" />
 
-    <EditText
-        android:id="@+id/etSsid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="SSID 교체" />
+        <EditText
+            android:id="@+id/etMac"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="신규 등록 SSID 입력" />
 
-    <!-- (기존) 버튼들 -->
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="환자 등록"
-        android:backgroundTint="@color/red" /> <!-- 빨간색 -->
+        <EditText
+            android:id="@+id/etSsid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="SSID 교체" />
 
-    <Button
-        android:id="@+id/btnApplySsid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="SSID 교체"
-        android:backgroundTint="@color/blue" />
+        <!-- (기존) 버튼들 -->
+        <Button
+            android:id="@+id/btnRegister"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="환자 등록"
+            android:backgroundTint="@color/red" /> <!-- 빨간색 -->
 
-    <Button
-        android:id="@+id/btnStart"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="스캔 시작" />
+        <Button
+            android:id="@+id/btnApplySsid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SSID 교체"
+            android:backgroundTint="@color/blue" />
 
-    <Button
-        android:id="@+id/btnStop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="스캔 종료" />
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="스캔 시작" />
 
-    <!-- (기존) 상태 텍스트 -->
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="상태"
-        android:textSize="18sp"
-        android:layout_marginBottom="24dp"/>
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="스캔 종료" />
 
-    <!-- ———————————————— -->
-    <!-- 새로 추가하는 낙상 감지 섹션 -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="■ 낙상 감지 상태"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"/>
+        <!-- (기존) 상태 텍스트 -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="상태: 대기 중" />
 
-    <!-- 낙상 감지 상태 표시 -->
-    <TextView
-        android:id="@+id/tvFallStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="감지 상태: 중지됨"
-        android:textSize="18sp"
-        android:layout_marginBottom="12dp"/>
-    <!-- 서버 전송 상태 -->
-    <TextView
-        android:id="@+id/tvServerStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="서버 상태: 대기 중"
-        android:textSize="18sp"
-        android:layout_marginBottom="24dp"/>
+        <!-- ———————————————— -->
+        <!-- 새로 추가하는 낙상 감지 섹션 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="■ 낙상 감지 상태"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
 
-    <!-- 낙상 감지 시작 -->
-    <Button
-        android:id="@+id/btnFallStart"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="낙상 감지 시작"
-        android:layout_marginBottom="8dp"/>
+        <!-- 낙상 감지 상태 표시 -->
+        <TextView
+            android:id="@+id/tvFallStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="낙상 감지: 중지됨" />
+        <!-- 서버 전송 상태 -->
+        <TextView
+            android:id="@+id/tvServerStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="서버 상태: 대기 중" />
 
-    <!-- 낙상 감지 종료 -->
-    <Button
-        android:id="@+id/btnFallStop"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="낙상 감지 종료"/>
+        <!-- 낙상 감지 시작 -->
+        <Button
+            android:id="@+id/btnFallStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="낙상 감지 시작" />
 
-    <Button
-        android:id="@+id/btnNurseCall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="간호사 호출"
-        android:layout_marginTop="16dp"
-        android:layout_gravity="center_horizontal"
-        android:backgroundTint="@color/pink" />
-</LinearLayout>
+        <!-- 낙상 감지 종료 -->
+        <Button
+            android:id="@+id/btnFallStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="낙상 감지 중지" />
+
+        <Button
+            android:id="@+id/btnNurseCall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="간호사 호출" />
+    </LinearLayout>
+</ScrollView>
