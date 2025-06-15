@@ -46,8 +46,16 @@ class FallDetectionService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
+    private var gyroscope: Sensor? = null
     private lateinit var vibrator: Vibrator
     private var ssid: String = ""
+
+    // 자이로스코프 데이터 저장용 변수
+    private var lastGyroX: Float = 0f
+    private var lastGyroY: Float = 0f
+    private var lastGyroZ: Float = 0f
+    private var lastAcc: Float = 0f
+    private var lastTime: Long = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -55,12 +63,10 @@ class FallDetectionService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // MainActivity에서 보낸 SSID 읽기
         intent?.getStringExtra(EXTRA_SSID)?.let { ssid = it }
 
         when (intent?.action) {
             ACTION_START -> {
-                // 1) 포그라운드 알림 띄우기 (5초 이내 startForeground() 호출 필수)
                 val notification = NotificationCompat.Builder(this, CHANNEL_ID)
                     .setContentTitle("낙상 감지 중")
                     .setContentText("앱이 백그라운드에서도 실행 중입니다.")
@@ -68,15 +74,20 @@ class FallDetectionService : Service(), SensorEventListener {
                     .build()
                 startForeground(NOTIF_ID, notification)
 
-                // 2) 센서·진동기 초기화 및 리스너 등록
-                sensorManager  = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-                accelerometer  = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-                vibrator       = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                // 센서 초기화
+                sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+                accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+                vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+                // 두 센서 모두 등록
                 accelerometer?.let {
                     sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
                 }
+                gyroscope?.let {
+                    sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
+                }
 
-                // 3) 상태 알림
                 isRunning = true
                 sendStatusBroadcast(true)
                 Log.d("FallService", "startDetection: 서비스 시작, 센서 등록 완료")
@@ -129,15 +140,48 @@ class FallDetectionService : Service(), SensorEventListener {
     // 센서 이벤트 콜백
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
-            val x = it.values[0]
-            val y = it.values[1]
-            val z = it.values[2] - 9.8f
-            val acc = Math.sqrt((x*x + y*y + z*z).toDouble()).toFloat()
+            when (event.sensor.type) {
+                Sensor.TYPE_ACCELEROMETER -> {
+                    val x = it.values[0]
+                    val y = it.values[1]
+                    val z = it.values[2] - 9.8f
+                    val acc = Math.sqrt((x*x + y*y + z*z).toDouble()).toFloat()
+                    lastAcc = acc
+                }
+                Sensor.TYPE_GYROSCOPE -> {
+                    val currentTime = System.currentTimeMillis()
+                    if (lastTime == 0L) {
+                        lastTime = currentTime
+                        return
+                    }
 
-            if (acc > 35) {  // 임계치(35m/s²) 이상일 때
-                vibrate()
-                showToast("낙상 감지!")
-                sendEmergency()
+                    val dt = (currentTime - lastTime) / 1000.0f
+                    lastTime = currentTime
+
+                    val gyroX = it.values[0]
+                    val gyroY = it.values[1]
+                    val gyroZ = it.values[2]
+
+                    // 각속도 변화량 계산
+                    val gyroDeltaX = Math.abs(gyroX - lastGyroX)
+                    val gyroDeltaY = Math.abs(gyroY - lastGyroY)
+                    val gyroDeltaZ = Math.abs(gyroZ - lastGyroZ)
+
+                    // 낙상 감지 조건
+                    val isFall = lastAcc > 35 && // 가속도 임계값
+                            (gyroDeltaX > 2.0f || gyroDeltaY > 2.0f || gyroDeltaZ > 2.0f) // 각속도 변화량 임계값
+
+                    if (isFall) {
+                        vibrate()
+                        showToast("낙상 감지!")
+                        sendEmergency()
+                    }
+
+                    // 현재 값을 이전 값으로 저장
+                    lastGyroX = gyroX
+                    lastGyroY = gyroY
+                    lastGyroZ = gyroZ
+                }
             }
         }
     }

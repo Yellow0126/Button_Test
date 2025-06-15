@@ -41,26 +41,40 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="환자 등록"
-            android:backgroundTint="@color/red" /> <!-- 빨간색 -->
+            android:backgroundTint="@color/blue"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btnApplySsid"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="SSID 교체"
-            android:backgroundTint="@color/blue" />
+
+             />
+
+        <!-- 구분선 추가 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
 
         <Button
             android:id="@+id/btnStart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="스캔 시작" />
+            android:text="스캔 시작"
+            android:backgroundTint="@android:color/holo_green_dark"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btnStop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="스캔 종료" />
+            android:text="스캔 종료"
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@android:color/white" />
 
         <!-- (기존) 상태 텍스트 -->
         <TextView
